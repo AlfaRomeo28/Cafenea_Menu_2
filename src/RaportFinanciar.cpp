@@ -12,10 +12,7 @@ RaportFinanciar::RaportFinanciar(double incasariTotale, double reduceriAcordate,
         throw EroareDateInvalide("Valorile raportului financiar nu pot fi negative.");
 }
 
-double RaportFinanciar::getIncasari() const { return incasari; }
-double RaportFinanciar::getReduceri() const { return reduceri; }
-double RaportFinanciar::getCostMateriePrima() const { return costMateriePrima; }
-double RaportFinanciar::getCheltuieliReaprovizionare() const { return cheltuieliReaprovizionare; }
+
 int RaportFinanciar::getNumarComenzi() const { return numarComenzi; }
 
 // profit brut = ce am incasat - cat a costat materia prima din bauturile vandute

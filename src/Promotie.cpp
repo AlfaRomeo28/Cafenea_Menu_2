@@ -27,8 +27,8 @@ Promotie::~Promotie()
 
 const std::string& Promotie::getNume() const { return nume; }
 const std::string& Promotie::getProdusVizat() const { return produsVizat; }
-bool Promotie::esteActiva() const { return activa; }
 int Promotie::getNumarInstante() { return numarInstante; }
+
 
 bool Promotie::aplicabila(const std::string& produs) const
 {
@@ -46,10 +46,7 @@ double Promotie::totalDupaPromotie(double pretUnitar, int cantitate) const
     return totalImpl(pretUnitar, cantitate);
 }
 
-double Promotie::economie(double pretUnitar, int cantitate) const
-{
-    return pretUnitar * cantitate - totalDupaPromotie(pretUnitar, cantitate);
-}
+
 
 void Promotie::activeaza() { activa = true; }
 void Promotie::dezactiveaza() { activa = false; }

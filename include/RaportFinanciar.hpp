@@ -17,10 +17,7 @@ public:
     RaportFinanciar(double incasariTotale, double reduceriAcordate, double costMaterii,
                     double cheltuieliStoc, int comenzi);
 
-    double getIncasari() const;
-    double getReduceri() const;
-    double getCostMateriePrima() const;
-    double getCheltuieliReaprovizionare() const;
+
     int getNumarComenzi() const;
 
     double profitBrut() const;

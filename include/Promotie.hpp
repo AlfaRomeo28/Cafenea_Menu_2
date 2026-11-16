@@ -31,12 +31,12 @@ public:
 
     const std::string& getNume() const;
     const std::string& getProdusVizat() const;
-    bool esteActiva() const;
+
     bool aplicabila(const std::string& produs) const;
 
     // total de plata pentru `cantitate` bucati (pret intreg daca promotia e oprita)
     double totalDupaPromotie(double pretUnitar, int cantitate) const;
-    double economie(double pretUnitar, int cantitate) const;
+
 
     void activeaza();
     void dezactiveaza();
