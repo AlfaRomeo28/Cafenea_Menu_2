@@ -61,7 +61,7 @@ public:
     RaportFinanciar raportFinanciar() const;
     bool salveazaRaportVanzari(const std::string& cale) const;
     bool salveazaStocInFisier(const std::string& cale) const;
-    const IstoricVanzari& getIstoric() const;
+    
 
     friend void swap(Cafenea& a, Cafenea& b) noexcept;
     friend std::ostream& operator<<(std::ostream& os, const Cafenea& c);

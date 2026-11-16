@@ -14,7 +14,7 @@ LinieComanda::LinieComanda(const std::string& denumireProdus, int cant, double p
 
 const std::string& LinieComanda::getDenumire() const { return denumire; }
 int LinieComanda::getCantitate() const { return cantitate; }
-double LinieComanda::getPretUnitar() const { return pretUnitar; }
+
 double LinieComanda::getTotal() const { return cantitate * pretUnitar; }
 
 void LinieComanda::adaugaCantitate(int cant)

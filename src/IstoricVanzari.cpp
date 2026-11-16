@@ -48,32 +48,6 @@ double IstoricVanzari::valoareMedieComanda() const
     return totalIncasari() / comenzi.size();
 }
 
-int IstoricVanzari::numarComenziClient(const std::string& client) const
-{
-    int nr = 0;
-    for (std::size_t i = 0; i < comenzi.size(); ++i)
-        if (comenzi[i].getNumeClient() == client)
-            ++nr;
-    return nr;
-}
-
-double IstoricVanzari::totalClient(const std::string& client) const
-{
-    double suma = 0.0;
-    for (std::size_t i = 0; i < comenzi.size(); ++i)
-        if (comenzi[i].getNumeClient() == client)
-            suma += comenzi[i].getTotal();
-    return suma;
-}
-
-const Comanda* IstoricVanzari::gasesteComanda(int id) const
-{
-    for (std::size_t i = 0; i < comenzi.size(); ++i)
-        if (comenzi[i].getId() == id)
-            return &comenzi[i];
-    return nullptr;
-}
-
 // produs -> cate bucati s-au vandut in total (map pastreaza cheile sortate)
 std::map<std::string, int> IstoricVanzari::cantitatiVandute() const
 {

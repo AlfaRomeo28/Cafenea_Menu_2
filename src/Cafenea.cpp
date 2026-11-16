@@ -306,10 +306,6 @@ bool Cafenea::salveazaRaportVanzari(const std::string& cale) const
     return istoric.salveazaInFisier(cale);
 }
 
-const IstoricVanzari& Cafenea::getIstoric() const
-{
-    return istoric;
-}
 
 std::ostream& operator<<(std::ostream& os, const Cafenea& c)
 {

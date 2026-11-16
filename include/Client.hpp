@@ -19,8 +19,6 @@ public:
     Client(const std::string& numeClient, double puncte, double totalInitial, int comenzi);
 
     const std::string& getNume() const;
-    double getPuncte() const;
-    double getTotalCheltuit() const;
     int getNumarComenzi() const;
 
     std::string getNivel() const;

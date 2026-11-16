@@ -24,8 +24,6 @@ Client::Client(const std::string& numeClient, double puncte, double totalInitial
 }
 
 const std::string& Client::getNume() const { return nume; }
-double Client::getPuncte() const { return puncteFidelitate; }
-double Client::getTotalCheltuit() const { return totalCheltuit; }
 int Client::getNumarComenzi() const { return numarComenzi; }
 
 int Client::indiceNivel() const

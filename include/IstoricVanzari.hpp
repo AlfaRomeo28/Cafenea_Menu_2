@@ -25,9 +25,7 @@ public:
     double totalIncasari() const;
     double totalReduceri() const;
     double valoareMedieComanda() const;
-    int numarComenziClient(const std::string& client) const;
-    double totalClient(const std::string& client) const;
-    const Comanda* gasesteComanda(int id) const;
+
     std::vector<std::pair<std::string, int> > topProduse(std::size_t n) const;
 
     bool salveazaInFisier(const std::string& cale) const;

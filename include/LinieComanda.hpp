@@ -16,7 +16,6 @@ public:
 
     const std::string& getDenumire() const;
     int getCantitate() const;
-    double getPretUnitar() const;
     double getTotal() const;
 
     void adaugaCantitate(int cant);
