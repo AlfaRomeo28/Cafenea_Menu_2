@@ -58,6 +58,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(nlohmann_json spdlog)
 
+if(APPLE)
+    target_compile_definitions(spdlog PUBLIC FMT_CONSTEVAL= FMT_USE_CONSTEVAL=0)
+endif()
 ###############################################################################
 
 # External dependencies with find_package
