@@ -31,24 +31,32 @@ include(cmake/RegisterTests.cmake)
 
 # External dependencies with FetchContent
 
-# include(FetchContent)
-#
-# set(FETCHCONTENT_QUIET OFF CACHE INTERNAL "Override verbose output" FORCE)
-# set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE INTERNAL "Override update strategy" FORCE)
-#
+include(FetchContent)
+
+set(FETCHCONTENT_QUIET OFF CACHE INTERNAL "Override verbose output" FORCE)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE INTERNAL "Override update strategy" FORCE)
+
 # NOTE: Also update env vars used for caching in
 #     - .github/actions/configure-cmake/action.yml
 #     - .github/workflows/cmake.yml
-# FetchContent_Declare(
-#     SomeLib
-#     SYSTEM         # keeps ext libs out of static code analysis
-#     GIT_REPOSITORY https://github.com/<SomeUser>/<SomeLib>.git
-#     GIT_TAG        <some_git_hash> # <which tag/branch @ <some_date>>
-#     GIT_SHALLOW    1  # works only with branches or tags, not with arbitrary commit hashes
-#     GIT_PROGRESS   ON
-# )
-#
-# FetchContent_MakeAvailable(SomeLib)
+FetchContent_Declare(
+        nlohmann_json
+        SYSTEM         # keeps ext libs out of static code analysis
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.11.3
+        GIT_SHALLOW    1
+        GIT_PROGRESS   ON
+)
+FetchContent_Declare(
+        spdlog
+        SYSTEM
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG        v1.14.1
+        GIT_SHALLOW    1
+        GIT_PROGRESS   ON
+)
+
+FetchContent_MakeAvailable(nlohmann_json spdlog)
 
 ###############################################################################
 
@@ -72,15 +80,19 @@ add_library(${MAIN_LIBRARY_NAME} STATIC
         include/Reteta.hpp
         include/Promotie.hpp
         include/RaportFinanciar.hpp
-
+        include/Exceptii.hpp
+        include/PromotieProcent.hpp
+        include/PromotieNPlusUnu.hpp
+        include/PromotiePragCantitate.hpp
+        include/IncarcatorDate.hpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
 add_executable(${MAIN_EXECUTABLE_NAME}
-    app/main.cpp
+        app/main.cpp
 )
 target_sources(${MAIN_LIBRARY_NAME}
-    PRIVATE
+        PRIVATE
         src/Ingrediente.cpp
         src/CReteta.cpp
         src/Reteta.cpp
@@ -91,7 +103,11 @@ target_sources(${MAIN_LIBRARY_NAME}
         src/LinieComanda.cpp
         src/Promotie.cpp
         src/RaportFinanciar.cpp
-
+        src/Exceptii.cpp
+        src/PromotieProcent.cpp
+        src/PromotieNPlusUnu.cpp
+        src/PromotiePragCantitate.cpp
+        src/IncarcatorDate.cpp
 )
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
@@ -104,20 +120,20 @@ set_compiler_flags(RUN_SANITIZERS ${USE_ASAN} TARGET_NAMES ${MAIN_EXECUTABLE_NAM
 
 # app/ needs no include dir of its own: it inherits include/ by linking the library
 target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 
 # use SYSTEM so cppcheck and clang-tidy do not report warnings from these directories
 # vendored external deps should be private by default
 # a public dep is an interface commitment, shared by app/ and tests/
 target_include_directories(${MAIN_LIBRARY_NAME} SYSTEM PUBLIC
-    ${EXT_PUBLIC_DIR}
+        ${EXT_PUBLIC_DIR}
 )
 target_include_directories(${MAIN_LIBRARY_NAME} SYSTEM PRIVATE
-    ${EXT_PRIVATE_DIR}
+        ${EXT_PRIVATE_DIR}
 )
 
 # target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE ${<SomeLib>_SOURCE_DIR}/include)
@@ -127,6 +143,9 @@ target_include_directories(${MAIN_LIBRARY_NAME} SYSTEM PRIVATE
 # Link libraries
 
 target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE ${MAIN_LIBRARY_NAME})
+
+# external libs are used only in src/*.cpp, so they are not part of the public interface
+target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE nlohmann_json::nlohmann_json spdlog::spdlog)
 
 # target_link_directories(${MAIN_EXECUTABLE_NAME} PRIVATE ${<SomeLib>_BINARY_DIR}/lib)
 # target_link_libraries(${MAIN_EXECUTABLE_NAME} <SomeLib>)
@@ -138,15 +157,14 @@ target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE ${MAIN_LIBRARY_NAME})
 install(TARGETS ${MAIN_EXECUTABLE_NAME} DESTINATION ${DESTINATION_DIR})
 install(TARGETS ${MAIN_LIBRARY_NAME} ARCHIVE DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    DESTINATION include
-    FILES_MATCHING
+        DESTINATION include
+        FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.hpp"
 )
 if(APPLE)
     install(FILES ${CMAKE_SOURCE_DIR}/launcher.command DESTINATION ${DESTINATION_DIR})
 endif()
-
 copy_files(FILES tastatura.txt DIRECTORY assets COPY_TO_DESTINATION TARGET_NAME ${MAIN_EXECUTABLE_NAME})
 # copy_files(FILES tastatura.txt config.json DIRECTORY images sounds COPY_TO_DESTINATION TARGET_NAME ${MAIN_EXECUTABLE_NAME})
 # copy_files(DIRECTORY images sounds COPY_TO_DESTINATION TARGET_NAME ${MAIN_EXECUTABLE_NAME})

@@ -1,6 +1,6 @@
 #include "RaportFinanciar.hpp"
 #include <fstream>
-#include <stdexcept>
+#include "Exceptii.hpp"
 
 RaportFinanciar::RaportFinanciar(double incasariTotale, double reduceriAcordate, double costMaterii,
                                  double cheltuieliStoc, int comenzi)
@@ -9,7 +9,7 @@ RaportFinanciar::RaportFinanciar(double incasariTotale, double reduceriAcordate,
 {
     if (incasari < 0.0 || reduceri < 0.0 || costMateriePrima < 0.0 ||
         cheltuieliReaprovizionare < 0.0 || numarComenzi < 0)
-        throw std::invalid_argument("Valorile raportului financiar nu pot fi negative.");
+        throw EroareDateInvalide("Valorile raportului financiar nu pot fi negative.");
 }
 
 double RaportFinanciar::getIncasari() const { return incasari; }

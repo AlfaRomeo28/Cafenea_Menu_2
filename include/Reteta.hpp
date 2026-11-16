@@ -3,33 +3,26 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include "CReteta.hpp"
 #include "Ingrediente.hpp"
 
-//  "regula celor 3": constructor de copiere, operator= si destructor
-
+// reteta unei bauturi; componentele sunt tinute intr-un std::vector (regula lui 0)
 class Reteta
 {
 private:
     std::string denBaut;
     double pretV;
-    CReteta* componente;
-    int nrcomp;
-
-    void copiazaComp(const CReteta* sursa, int dim);
+    std::vector<CReteta> componente;
 public:
-    Reteta();
-    Reteta(const std::string& denumire, double pret, const CReteta* comp, int nrComp);
-    Reteta(const Reteta& other);
-    Reteta& operator=(const Reteta& other);
-    ~Reteta();
+    Reteta(std::string denumire, double pret, std::vector<CReteta> comp);
 
     const std::string& getDenumire() const;
     double getPretVanzare() const;
-    int getNumarComponente() const;
-    const CReteta* getComponente() const;
 
-    double calculeazaCostProductie(const Ingrediente* stoc, int nrIngrediente) const;
+    // adauga componentele retetei la necesarul total (cumuleaza cantitatile aceluiasi ingredient)
+    void adaugaLaNecesar(std::vector<CReteta>& necesar) const;
+    double calculeazaCostProductie(const std::vector<Ingrediente>& stoc) const;
 
     friend std::ostream& operator<<(std::ostream& os, const Reteta& ret);
 };

@@ -1,50 +1,98 @@
 #include "Cafenea.hpp"
+#include <algorithm>
 #include <fstream>
+#include <map>
 #include <sstream>
-#include <stdexcept>
+#include <utility>
+#include <spdlog/spdlog.h>
+#include "Exceptii.hpp"
+#include "PromotieProcent.hpp"
 
 Cafenea::Cafenea(const std::string& numeCafenea, double fondInitial)
     : nume(numeCafenea), balansf(fondInitial), istoric(numeCafenea), urmatorulIdComanda(1),
-      cheltuieliReaprovizionare(0.0) {}
+      cheltuieliReaprovizionare(0.0)
+{
+    if (nume.empty())
+        throw EroareDateInvalide("Cafeneaua trebuie sa aiba un nume.");
+    if (fondInitial < 0.0)
+        throw EroareDateInvalide("Fondul initial nu poate fi negativ.");
+}
+
+Cafenea::Cafenea(const Cafenea& alta)
+    : nume(alta.nume), balansf(alta.balansf), stocIngrediente(alta.stocIngrediente),
+      catalogR(alta.catalogR), istoric(alta.istoric), urmatorulIdComanda(alta.urmatorulIdComanda),
+      cheltuieliReaprovizionare(alta.cheltuieliReaprovizionare)
+{
+    promotii.reserve(alta.promotii.size());
+    for (const auto& p : alta.promotii)
+        promotii.push_back(p->clone());
+}
+
+void swap(Cafenea& a, Cafenea& b) noexcept
+{
+    using std::swap;
+    swap(a.nume, b.nume);
+    swap(a.balansf, b.balansf);
+    swap(a.stocIngrediente, b.stocIngrediente);
+    swap(a.catalogR, b.catalogR);
+    swap(a.istoric, b.istoric);
+    swap(a.urmatorulIdComanda, b.urmatorulIdComanda);
+    swap(a.promotii, b.promotii);
+    swap(a.cheltuieliReaprovizionare, b.cheltuieliReaprovizionare);
+}
+
+Cafenea& Cafenea::operator=(Cafenea alta)
+{
+    swap(*this, alta);
+    return *this;
+}
 
 int Cafenea::gasesteIndexIngredient(const std::string& denumire) const
 {
-    for (std::size_t i = 0; i < stocIngrediente.size(); ++i)
-        if (stocIngrediente[i].getdenumire() == denumire)
-            return static_cast<int>(i);
-    return -1;
+    auto it = std::find_if(stocIngrediente.begin(), stocIngrediente.end(),
+        [&denumire](const Ingrediente& ing) { return ing.getdenumire() == denumire; });
+    return it == stocIngrediente.end() ? -1 : static_cast<int>(it - stocIngrediente.begin());
 }
 
 int Cafenea::gasesteIndexReteta(const std::string& denumire) const
 {
-    for (std::size_t i = 0; i < catalogR.size(); ++i)
-        if (catalogR[i].getDenumire() == denumire)
-            return static_cast<int>(i);
-    return -1;
+    auto it = std::find_if(catalogR.begin(), catalogR.end(),
+        [&denumire](const Reteta& r) { return r.getDenumire() == denumire; });
+    return it == catalogR.end() ? -1 : static_cast<int>(it - catalogR.begin());
 }
 
-// aduna necesarul total de ingrediente: daca ingredientul exista deja in lista,
-// ii creste cantitatea sau il adauga
-void Cafenea::adaugaLaNecesar(std::vector<CReteta>& necesar, const CReteta& comp)
+int Cafenea::gasesteIndexPromotieNume(const std::string& numePromotie) const
 {
-    for (std::size_t i = 0; i < necesar.size(); ++i)
+    auto it = std::find_if(promotii.begin(), promotii.end(),
+        [&numePromotie](const std::unique_ptr<Promotie>& p) { return p->getNume() == numePromotie; });
+    return it == promotii.end() ? -1 : static_cast<int>(it - promotii.begin());
+}
+
+// apelul virtual: fiecare promotie isi calculeaza singura totalul
+int Cafenea::gasesteIndexPromotie(const std::string& produs, double pretUnitar, int cantitate) const
+{
+    int best = -1;
+    double totalBest = 0.0;
+    for (std::size_t i = 0; i < promotii.size(); ++i)
     {
-        if (necesar[i].getnume() == comp.getnume())
+        if (!promotii[i]->aplicabila(produs))
+            continue;
+        double total = promotii[i]->totalDupaPromotie(pretUnitar, cantitate);
+        if (best == -1 || total < totalBest)
         {
-            necesar[i] = CReteta(comp.getnume(), necesar[i].getcantitate() + comp.getcantitate());
-            return;
+            best = static_cast<int>(i);
+            totalBest = total;
         }
     }
-    necesar.push_back(comp);
+    return best;
 }
-
 
 bool Cafenea::stocAcopera(const std::vector<CReteta>& necesar) const
 {
-    for (std::size_t i = 0; i < necesar.size(); ++i)
+    for (const CReteta& comp : necesar)
     {
-        int idx = gasesteIndexIngredient(necesar[i].getnume());
-        if (idx == -1 || stocIngrediente[idx].getcantitateDisponibila() < necesar[i].getcantitate())
+        int idx = gasesteIndexIngredient(comp.getnume());
+        if (idx == -1 || stocIngrediente[static_cast<std::size_t>(idx)].getcantitateDisponibila() < comp.getcantitate())
             return false;
     }
     return true;
@@ -57,23 +105,47 @@ void Cafenea::adaugaIngredient(const Ingrediente& ing)
 
 void Cafenea::adaugaReteta(const Reteta& ret)
 {
+    if (gasesteIndexReteta(ret.getDenumire()) != -1)
+        throw EroareDateInvalide("Exista deja o reteta cu numele: " + ret.getDenumire());
     catalogR.push_back(ret);
 }
 
+void Cafenea::adaugaPromotie(std::unique_ptr<Promotie> promo)
+{
+    if (!promo)
+        throw EroareDateInvalide("Promotie lipsa.");
+    if (gasesteIndexReteta(promo->getProdusVizat()) == -1)
+        throw EroareDateInvalide("Promotia vizeaza un produs inexistent: " + promo->getProdusVizat());
+    if (gasesteIndexPromotieNume(promo->getNume()) != -1)
+        throw EroareDateInvalide("Exista deja o promotie cu numele: " + promo->getNume());
+    promotii.push_back(std::move(promo));
+}
 
-// returneaza cate ingrediente a incarcat, sau -1 daca fisierul nu poate fi deschis
+bool Cafenea::seteazaStarePromotie(const std::string& numePromotie, bool activa)
+{
+    int idx = gasesteIndexPromotieNume(numePromotie);
+    if (idx == -1)
+        return false;
+    Promotie& promo = *promotii[static_cast<std::size_t>(idx)];
+    if (activa)
+        promo.activeaza();
+    else
+        promo.dezactiveaza();
+    return true;
+}
+
 int Cafenea::incarcaIngredienteDinFisier(const std::string& cale)
 {
-    std::ifstream fisier(cale.c_str());
+    std::ifstream fisier(cale);
     if (!fisier.is_open())
-        return -1;
+        throw EroareFisier(cale, "nu pot deschide fisierul");
 
     int incarcate = 0;
     std::string linie;
     while (std::getline(fisier, linie))
     {
-        if (!linie.empty() && linie[linie.size() - 1] == '\r')
-            linie.erase(linie.size() - 1);
+        if (!linie.empty() && linie.back() == '\r')
+            linie.pop_back();
         if (linie.empty() || linie[0] == '#')
             continue;
 
@@ -82,7 +154,7 @@ int Cafenea::incarcaIngredienteDinFisier(const std::string& cale)
         if (!(std::getline(ss, den, ';') && std::getline(ss, stocText, ';') &&
               std::getline(ss, unitate, ';') && std::getline(ss, pretText, ';')))
         {
-            std::cout << "[ATENTIE] Linie invalida ignorata: " << linie << "\n";
+            spdlog::warn("Linie invalida ignorata: {}", linie);
             continue;
         }
 
@@ -91,16 +163,26 @@ int Cafenea::incarcaIngredienteDinFisier(const std::string& cale)
             double stoc = std::stod(stocText);
             double pret = std::stod(pretText);
             if (den.empty() || stoc < 0.0 || pret < 0.0)
-                throw std::invalid_argument("valori invalide");
+                throw EroareDateInvalide("valori negative sau denumire goala");
             adaugaIngredient(Ingrediente(den, stoc, unitate, pret));
             ++incarcate;
         }
         catch (const std::exception&)
         {
-            std::cout << "[ATENTIE] Valori invalide, linie ignorata: " << linie << "\n";
+            spdlog::warn("Valori invalide, linie ignorata: {}", linie);
         }
     }
+    if (incarcate == 0)
+        throw EroareFisier(cale, "nu contine niciun ingredient valid");
     return incarcate;
+}
+
+std::vector<std::string> Cafenea::numeBauturi() const
+{
+    std::vector<std::string> nume_bauturi;
+    for (const Reteta& r : catalogR)
+        nume_bauturi.push_back(r.getDenumire());
+    return nume_bauturi;
 }
 
 bool Cafenea::poatePrepara(const std::string& numeBautura) const
@@ -108,116 +190,104 @@ bool Cafenea::poatePrepara(const std::string& numeBautura) const
     int ir = gasesteIndexReteta(numeBautura);
     if (ir == -1)
         return false;
-
-    const CReteta* comp = catalogR[ir].getComponente();
-    int nrComp = catalogR[ir].getNumarComponente();
-    std::vector<CReteta> necesar(comp, comp + nrComp);
+    std::vector<CReteta> necesar;
+    catalogR[static_cast<std::size_t>(ir)].adaugaLaNecesar(necesar);
     return stocAcopera(necesar);
 }
 
-// Comanda simpla (un singur produs, client anonim); foloseste comanda completa
-bool Cafenea::proceseazaComanda(const std::string& numeBautura)
+// comanda simpla: un singur produs, client anonim
+void Cafenea::proceseazaComanda(const std::string& numeBautura)
 {
     Client anonim("Client anonim");
-    return plaseazaComanda(anonim, std::vector<std::string>(1, numeBautura));
+    plaseazaComanda(anonim, std::vector<std::string>(1, numeBautura));
 }
 
-//Comanda client completa
-//  1) aduna necesarul total, 2) verifica stocul pentru tot, 3) scade ingredientele, 4) aplica reducerea de fidelitate, 5) incaseaza si inregistreaza
-bool Cafenea::plaseazaComanda(Client& client, const std::vector<std::string>& produse)
+// 1) aduna necesarul total, 2) verifica stocul pentru tot, 3) scade ingredientele,
+// 4) pretul fiecarui produs, dupa cea mai buna promotie pentru cantitatea comandata,
+// 5) reducerea de fidelitate, 6) incaseaza si inregistreaza
+void Cafenea::plaseazaComanda(Client& client, const std::vector<std::string>& produse)
 {
     if (produse.empty())
-    {
-        std::cout << "[EROARE] Comanda nu contine niciun produs.\n";
-        return false;
-    }
+        throw EroareDateInvalide("Comanda nu contine niciun produs.");
 
     std::vector<CReteta> necesar;
-    for (std::size_t i = 0; i < produse.size(); ++i)
+    std::map<std::string, int> cantitati;
+    for (const std::string& produs : produse)
     {
-        int ir = gasesteIndexReteta(produse[i]);
+        int ir = gasesteIndexReteta(produs);
         if (ir == -1)
-        {
-            std::cout << "[EROARE] Produs necunoscut: '" << produse[i] << "'. Comanda anulata.\n";
-            return false;
-        }
-        const CReteta* comp = catalogR[ir].getComponente();
-        for (int j = 0; j < catalogR[ir].getNumarComponente(); ++j)
-            adaugaLaNecesar(necesar, comp[j]);
+            throw EroareDateInvalide("Produs necunoscut: '" + produs + "'.");
+        catalogR[static_cast<std::size_t>(ir)].adaugaLaNecesar(necesar);
+        ++cantitati[produs];
     }
 
     if (!stocAcopera(necesar))
-    {
-        std::cout << "[EROARE] Stoc insuficient pentru intreaga comanda. Comanda anulata.\n";
-        return false;
-    }
+        throw EroareStocInsuficient("nu ajunge stocul pentru intreaga comanda.");
 
-    for (std::size_t i = 0; i < necesar.size(); ++i)
-        stocIngrediente[gasesteIndexIngredient(necesar[i].getnume())].consuma(necesar[i].getcantitate());
+    for (const CReteta& comp : necesar)
+        stocIngrediente[static_cast<std::size_t>(gasesteIndexIngredient(comp.getnume()))].consuma(comp.getcantitate());
 
     Comanda cmd(urmatorulIdComanda, client.getNume());
-    for (std::size_t i = 0; i < produse.size(); ++i)
+    for (const auto& linie : cantitati)
     {
-        double pret = catalogR[gasesteIndexReteta(produse[i])].getPretVanzare();
-        int ip = gasesteIndexPromotie(produse[i]);
+        const std::string& produs = linie.first;
+        int cantitate = linie.second;
+        double pret = catalogR[static_cast<std::size_t>(gasesteIndexReteta(produs))].getPretVanzare();
+        double total = pret * cantitate;
+
+        int ip = gasesteIndexPromotie(produs, pret, cantitate);
         if (ip != -1)
         {
-            double pretRedus = promotii[ip].calculeazaPretRedus(pret);
-            std::cout << "[PROMO] " << promotii[ip].getNume() << ": " << produse[i] << " "
-                      << pret << " -> " << pretRedus << " Lei leuti\n";
-            pret = pretRedus;
+            const Promotie& promo = *promotii[static_cast<std::size_t>(ip)];
+            double totalPromo = promo.totalDupaPromotie(pret, cantitate);
+            if (totalPromo < total)
+            {
+                spdlog::info("[PROMO] {}: {} x{} {:.2f} -> {:.2f} Lei leuti", promo.getNume(), produs,
+                             cantitate, total, totalPromo);
+                total = totalPromo;
+            }
         }
-        cmd.adaugaLinie(produse[i], pret);
+        cmd.adaugaLinie(produs, total / cantitate, cantitate);
     }
 
-    cmd.aplicaReducere(client.getReducere());   // reducerea nivelului de la inceputul comenzii
+    cmd.aplicaReducere(client.getReducere());   // reducerea nivelului de fidelitate
     balansf += cmd.getTotal();
     client.inregistreazaComanda(cmd.getTotal());
     istoric.adaugaComanda(cmd);
-    urmatorulIdComanda = urmatorulIdComanda + 1;
+    ++urmatorulIdComanda;
 
     std::cout << "[COMANDA FINALIZATA]\n" << cmd << "\n";
-    return true;
 }
 
-bool Cafenea::reaprovizioneaza(const std::string& denumireIngredient, double cantitate)
+void Cafenea::reaprovizioneaza(const std::string& denumireIngredient, double cantitate)
 {
     int idx = gasesteIndexIngredient(denumireIngredient);
     if (idx == -1 || cantitate <= 0.0)
-    {
-        std::cout << "[EROARE] Ingredient necunoscut sau cantitate invalida.\n";
-        return false;
-    }
+        throw EroareDateInvalide("ingredient necunoscut sau cantitate invalida.");
 
-    double cost = cantitate * stocIngrediente[idx].getpretUnitate();
+    Ingrediente& ing = stocIngrediente[static_cast<std::size_t>(idx)];
+    double cost = cantitate * ing.getpretUnitate();
     if (cost > balansf)
-    {
-        std::cout << "[EROARE] Fonduri insuficiente (necesar: " << cost
-                  << " Lei leuti, disponibil: " << balansf << ").\n";
-        return false;
-    }
+        throw EroareFonduriInsuficiente(cost, balansf);
 
     balansf -= cost;
     cheltuieliReaprovizionare += cost;
-    stocIngrediente[idx].adaugaStoc(cantitate);
-    std::cout << "[REAPROVIZIONARE] +" << cantitate << " "
-              << stocIngrediente[idx].getunitateMasura() << " "
-              << denumireIngredient << " | Cost: " << cost << " Lei leuti\n";
-    return true;
+    ing.adaugaStoc(cantitate);
+    spdlog::info("[REAPROVIZIONARE] +{} {} {} | Cost: {:.2f} Lei leuti", cantitate,
+                 ing.getunitateMasura(), denumireIngredient, cost);
 }
 
 void Cafenea::afiseazaRaportProfitabilitate() const
 {
     std::cout << "\n---------- RAPORT RENTABILITATE CATALOG ----------\n";
-    for (std::size_t i = 0; i < catalogR.size(); ++i)
+    for (const Reteta& r : catalogR)
     {
-        double cost = catalogR[i].calculeazaCostProductie(stocIngrediente.data(),
-                                                          static_cast<int>(stocIngrediente.size()));
-        double pret = catalogR[i].getPretVanzare();
+        double cost = r.calculeazaCostProductie(stocIngrediente);
+        double pret = r.getPretVanzare();
         double profitNet = pret - cost;
         double marja = (pret > 0.0) ? (profitNet / pret) * 100.0 : 0.0;
 
-        std::cout << "- " << catalogR[i].getDenumire()
+        std::cout << "- " << r.getDenumire()
                   << " | Cost Productie: " << cost << " Lei leuti"
                   << " | Pret Vanzare: " << pret << " Lei leuti"
                   << " | Profit Net: " << profitNet << " Lei leuti"
@@ -247,55 +317,13 @@ std::ostream& operator<<(std::ostream& os, const Cafenea& c)
        << "Cafenea: " << c.nume << " | Balanta: " << c.balansf << " Lei leuti"
        << " | Comenzi finalizate: " << c.istoric.getNumarComenzi() << "\n"
        << "Stocuri Curente:\n";
-    for (std::size_t i = 0; i < c.stocIngrediente.size(); ++i)
-        os << "  * " << c.stocIngrediente[i] << "\n";
+    for (const Ingrediente& ing : c.stocIngrediente)
+        os << "  * " << ing << "\n";
     os << "Catalog:\n";
-    for (std::size_t i = 0; i < c.catalogR.size(); ++i)
-        os << "  - " << c.catalogR[i] << "\n";
+    for (const Reteta& r : c.catalogR)
+        os << "  - " << r << "\n";
     os << "-----------------------------------";
     return os;
-}
-
-// Intoarce promotia activa cu cea mai mare reducere pentru produs, sau -1
-int Cafenea::gasesteIndexPromotie(const std::string& produs) const
-{
-    int best = -1;
-    for (std::size_t i = 0; i < promotii.size(); ++i)
-    {
-        if (promotii[i].aplicabila(produs) &&
-            (best == -1 || promotii[i].getProcent() > promotii[best].getProcent()))
-            best = static_cast<int>(i);
-    }
-    return best;
-}
-
-int Cafenea::gasesteIndexPromotieNume(const std::string& numePromotie) const
-{
-    for (std::size_t i = 0; i < promotii.size(); ++i)
-        if (promotii[i].getNume() == numePromotie)
-            return static_cast<int>(i);
-    return -1;
-}
-
-void Cafenea::adaugaPromotie(const Promotie& promo)
-{
-    if (gasesteIndexReteta(promo.getProdusVizat()) == -1)
-        throw std::invalid_argument("Promotia vizeaza un produs inexistent: " + promo.getProdusVizat());
-    if (gasesteIndexPromotieNume(promo.getNume()) != -1)
-        throw std::invalid_argument("Exista deja o promotie cu numele: " + promo.getNume());
-    promotii.push_back(promo);
-}
-
-bool Cafenea::seteazaStarePromotie(const std::string& numePromotie, bool activa)
-{
-    int idx = gasesteIndexPromotieNume(numePromotie);
-    if (idx == -1)
-        return false;
-    if (activa)
-        promotii[idx].activeaza();
-    else
-        promotii[idx].dezactiveaza();
-    return true;
 }
 
 void Cafenea::afiseazaPromotii() const
@@ -303,25 +331,35 @@ void Cafenea::afiseazaPromotii() const
     std::cout << "\n---------- PROMOTII ----------\n";
     if (promotii.empty())
         std::cout << "Nu exista promotii definite.\n";
-    for (std::size_t i = 0; i < promotii.size(); ++i)
-        std::cout << " * " << promotii[i] << "\n";
+
+    int procentuale = 0;
+    double reducereMaxima = 0.0;
+    for (const auto& p : promotii)
+    {
+        std::cout << " * " << *p << "\n";
+        // downcast cu sens: doar PromotieProcent are un procent de comparat
+        if (const PromotieProcent* pp = dynamic_cast<const PromotieProcent*>(p.get()))
+        {
+            ++procentuale;
+            reducereMaxima = std::max(reducereMaxima, pp->getProcent());
+        }
+    }
+    if (procentuale > 0)
+        std::cout << "Promotii procentuale: " << procentuale << " (cea mai mare: " << reducereMaxima << "%)\n";
+    std::cout << "Instante de promotii in memorie: " << Promotie::getNumarInstante() << "\n";
     std::cout << "------------------------------\n";
 }
 
-// Costul materiei prime pentru TOATE bauturile vandute pana acum:
-// pentru fiecare produs, cantitate vanduta * costul de productie al retetei
+// cost materie prima pentru toate bauturile vandute pana acum
 double Cafenea::costMateriePrimaVanduta() const
 {
     double total = 0.0;
-    std::vector<std::pair<std::string, int> > vandute = istoric.topProduse(catalogR.size());
-    for (std::size_t i = 0; i < vandute.size(); ++i)
+    for (const auto& vandut : istoric.topProduse(catalogR.size()))
     {
-        int ir = gasesteIndexReteta(vandute[i].first);
+        int ir = gasesteIndexReteta(vandut.first);
         if (ir == -1)
             continue;
-        double costUnitar = catalogR[ir].calculeazaCostProductie(stocIngrediente.data(),
-                                                                 static_cast<int>(stocIngrediente.size()));
-        total += vandute[i].second * costUnitar;
+        total += vandut.second * catalogR[static_cast<std::size_t>(ir)].calculeazaCostProductie(stocIngrediente);
     }
     return total;
 }
@@ -338,20 +376,18 @@ void Cafenea::afiseazaRaportFinanciar() const
     std::cout << "\n" << raportFinanciar() << "\n";
 }
 
-// Scrie stocul curent in acelasi format pe care il citeste incarcaIngredienteDinFisier
+// scrie stocul in acelasi format pe care il citeste incarcaIngredienteDinFisier
 bool Cafenea::salveazaStocInFisier(const std::string& cale) const
 {
-    std::ofstream fisier(cale.c_str());
+    std::ofstream fisier(cale);
     if (!fisier.is_open())
         return false;
 
     fisier << "# denumire;stoc;unitate;pret_unitar\n";
-    for (std::size_t i = 0; i < stocIngrediente.size(); ++i)
+    for (const Ingrediente& ing : stocIngrediente)
     {
-        fisier << stocIngrediente[i].getdenumire() << ";"
-               << stocIngrediente[i].getcantitateDisponibila() << ";"
-               << stocIngrediente[i].getunitateMasura() << ";"
-               << stocIngrediente[i].getpretUnitate() << "\n";
+        fisier << ing.getdenumire() << ";" << ing.getcantitateDisponibila() << ";"
+               << ing.getunitateMasura() << ";" << ing.getpretUnitate() << "\n";
     }
     return fisier.good();
 }

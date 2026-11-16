@@ -1,5 +1,5 @@
 #include "Client.hpp"
-#include <stdexcept>
+#include "Exceptii.hpp"
 
 namespace
 {
@@ -11,16 +11,16 @@ Client::Client(const std::string& numeClient)
     : nume(numeClient), puncteFidelitate(0.0), totalCheltuit(0.0), numarComenzi(0)
 {
     if (nume.empty())
-        throw std::invalid_argument("Numele clientului nu poate fi gol.");
+        throw EroareDateInvalide("Numele clientului nu poate fi gol.");
 }
 
 Client::Client(const std::string& numeClient, double puncte, double totalInitial, int comenzi)
     : nume(numeClient), puncteFidelitate(puncte), totalCheltuit(totalInitial), numarComenzi(comenzi)
 {
     if (nume.empty())
-        throw std::invalid_argument("Numele clientului nu poate fi gol.");
+        throw EroareDateInvalide("Numele clientului nu poate fi gol.");
     if (puncte < 0.0 || totalInitial < 0.0 || comenzi < 0)
-        throw std::invalid_argument("Valorile initiale ale clientului nu pot fi negative.");
+        throw EroareDateInvalide("Valorile initiale ale clientului nu pot fi negative.");
 }
 
 const std::string& Client::getNume() const { return nume; }
@@ -67,7 +67,7 @@ double Client::getReducere() const
 void Client::inregistreazaComanda(double sumaPlatita)
 {
     if (sumaPlatita < 0.0)
-        throw std::invalid_argument("Suma platita nu poate fi negativa.");
+        throw EroareDateInvalide("Suma platita nu poate fi negativa.");
     puncteFidelitate += sumaPlatita;
     totalCheltuit += sumaPlatita;
     numarComenzi = numarComenzi + 1;

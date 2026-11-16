@@ -1,0 +1,6 @@
+[
+  { "tip": "procent",    "nume": "Happy Hour Espresso", "produs": "Espresso",      "procent": 20.0, "activa": false },
+  { "tip": "n_plus_unu", "nume": "2+1 Cappuccino",      "produs": "Cappuccino",    "n": 2,           "activa": true },
+  { "tip": "prag",       "nume": "Pachet Latte",        "produs": "Vanilla Latte", "prag": 3, "procent": 15.0, "activa": false },
+  { "tip": "procent", "nume": "Craciun Gingerbread", "produs": "Gingerbread Latte", "procent": 15.0, "activa": true }
+]

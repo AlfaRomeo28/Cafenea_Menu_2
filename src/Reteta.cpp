@@ -1,67 +1,44 @@
 #include "Reteta.hpp"
+#include <algorithm>
+#include <utility>
+#include "Exceptii.hpp"
 
-void Reteta::copiazaComp(const CReteta* sursa, int dim)
+Reteta::Reteta(std::string denumire, double pret, std::vector<CReteta> comp)
+    : denBaut(std::move(denumire)), pretV(pret), componente(std::move(comp))
 {
-    if (dim > 0 && sursa != nullptr)
-    {
-        nrcomp = dim;
-        componente = new CReteta[dim];
-        for (int i = 0; i < dim; ++i)
-            componente[i] = sursa[i];
-    }
-    else
-    {
-        componente = nullptr;
-        nrcomp = 0;
-    }
-}
-
-Reteta::Reteta() : denBaut(""), pretV(0.0), componente(nullptr), nrcomp(0) {}
-
-Reteta::Reteta(const std::string& denumire, double pret, const CReteta* comp, int nrComp)
-    : denBaut(denumire), pretV(pret), componente(nullptr), nrcomp(0)
-{
-    copiazaComp(comp, nrComp);
-}
-
-Reteta::Reteta(const Reteta& other)
-    : denBaut(other.denBaut), pretV(other.pretV), componente(nullptr), nrcomp(0)
-{
-    copiazaComp(other.componente, other.nrcomp);
-}
-
-Reteta& Reteta::operator=(const Reteta& other)
-{
-    if (this != &other)
-    {
-        delete[] componente;
-        denBaut = other.denBaut;
-        pretV = other.pretV;
-        copiazaComp(other.componente, other.nrcomp);
-    }
-    return *this;
-}
-
-Reteta::~Reteta()
-{
-    delete[] componente;
+    if (denBaut.empty())
+        throw EroareDateInvalide("Reteta trebuie sa aiba o denumire.");
+    if (pretV < 0.0)
+        throw EroareDateInvalide("Pretul retetei '" + denBaut + "' nu poate fi negativ.");
+    if (componente.empty())
+        throw EroareDateInvalide("Reteta '" + denBaut + "' nu are ingrediente.");
 }
 
 const std::string& Reteta::getDenumire() const { return denBaut; }
 double Reteta::getPretVanzare() const { return pretV; }
-int Reteta::getNumarComponente() const { return nrcomp; }
-const CReteta* Reteta::getComponente() const { return componente; }
 
-double Reteta::calculeazaCostProductie(const Ingrediente* stoc, int nrIngrediente) const
+void Reteta::adaugaLaNecesar(std::vector<CReteta>& necesar) const
+{
+    for (const CReteta& comp : componente)
+    {
+        auto it = std::find_if(necesar.begin(), necesar.end(),
+            [&comp](const CReteta& n) { return n.getnume() == comp.getnume(); });
+        if (it == necesar.end())
+            necesar.push_back(comp);
+        else
+            *it = CReteta(comp.getnume(), it->getcantitate() + comp.getcantitate());
+    }
+}
+
+double Reteta::calculeazaCostProductie(const std::vector<Ingrediente>& stoc) const
 {
     double costTotal = 0.0;
-    for (int i = 0; i < nrcomp; ++i)
+    for (const CReteta& comp : componente)
     {
-        for (int j = 0; j < nrIngrediente; ++j)
-        {
-            if (stoc[j].getdenumire() == componente[i].getnume())
-                costTotal += componente[i].getcantitate() * stoc[j].getpretUnitate();
-        }
+        auto it = std::find_if(stoc.begin(), stoc.end(),
+            [&comp](const Ingrediente& ing) { return ing.getdenumire() == comp.getnume(); });
+        if (it != stoc.end())
+            costTotal += comp.getcantitate() * it->getpretUnitate();
     }
     return costTotal;
 }
@@ -69,10 +46,10 @@ double Reteta::calculeazaCostProductie(const Ingrediente* stoc, int nrIngredient
 std::ostream& operator<<(std::ostream& os, const Reteta& ret)
 {
     os << "Produs: " << ret.denBaut << " | Pret: " << ret.pretV << " Lei leuti | Ingrediente: [";
-    for (int i = 0; i < ret.nrcomp; ++i)
+    for (std::size_t i = 0; i < ret.componente.size(); ++i)
     {
-        os << ret.componente[i];   // compunere de apeluri operator<<
-        if (i < ret.nrcomp - 1)
+        os << ret.componente[i];
+        if (i + 1 < ret.componente.size())
             os << ", ";
     }
     os << "]";

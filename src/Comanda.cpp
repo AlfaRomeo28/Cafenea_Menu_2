@@ -1,13 +1,13 @@
 #include "Comanda.hpp"
-#include <stdexcept>
+#include "Exceptii.hpp"
 
 Comanda::Comanda(int idComanda, const std::string& client)
     : id(idComanda), numeClient(client), reducereProcent(0.0)
 {
     if (id <= 0)
-        throw std::invalid_argument("Id-ul comenzii trebuie sa fie pozitiv.");
+        throw EroareDateInvalide("Id-ul comenzii trebuie sa fie pozitiv.");
     if (numeClient.empty())
-        throw std::invalid_argument("Comanda trebuie sa aiba un client.");
+        throw EroareDateInvalide("Comanda trebuie sa aiba un client.");
 }
 
 int Comanda::gasesteLinie(const std::string& denumire) const
@@ -31,7 +31,7 @@ void Comanda::adaugaLinie(const std::string& denumire, double pretUnitar, int ca
 void Comanda::aplicaReducere(double procent)
 {
     if (procent < 0.0 || procent > 100.0)
-        throw std::invalid_argument("Reducerea trebuie sa fie intre 0 si 100%.");
+        throw EroareDateInvalide("Reducerea trebuie sa fie intre 0 si 100%.");
     reducereProcent = procent;
 }
 

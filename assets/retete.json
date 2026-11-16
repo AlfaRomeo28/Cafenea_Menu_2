@@ -1,0 +1,62 @@
+[
+  {
+    "denumire": "Espresso",
+    "pret": 10.0,
+    "ingrediente": [
+      { "nume": "Cafea Boabe", "cantitate": 18.0 }
+    ]
+  },
+  {
+    "denumire": "Cappuccino",
+    "pret": 16.0,
+    "ingrediente": [
+      { "nume": "Cafea Boabe", "cantitate": 18.0 },
+      { "nume": "Lapte Integral", "cantitate": 150.0 }
+    ]
+  },
+  {
+    "denumire": "Vanilla Latte",
+    "pret": 20.0,
+    "ingrediente": [
+      { "nume": "Cafea Boabe", "cantitate": 18.0 },
+      { "nume": "Lapte Integral", "cantitate": 200.0 },
+      { "nume": "Sirop Vanilie", "cantitate": 20.0 }
+    ]
+  },
+    {
+    "denumire": "Mocha",
+    "pret": 18.0,
+    "ingrediente": [
+      { "nume": "Cafea Boabe", "cantitate": 18.0 },
+      { "nume": "Lapte Integral", "cantitate": 150.0 },
+      { "nume": "Ciocolata Calda", "cantitate": 30.0 }
+    ]
+  },
+  {
+    "denumire": "Caramel Macchiato",
+    "pret": 21.0,
+    "ingrediente": [
+      { "nume": "Cafea Boabe", "cantitate": 18.0 },
+      { "nume": "Lapte Integral", "cantitate": 180.0 },
+      { "nume": "Sirop Caramel", "cantitate": 20.0 }
+    ]
+  },
+  {
+    "denumire": "Ciocolata Calda",
+    "pret": 15.0,
+    "ingrediente": [
+      { "nume": "Lapte Integral", "cantitate": 200.0 },
+      { "nume": "Ciocolata Calda", "cantitate": 50.0 }
+    ]
+  },
+  {
+    "denumire": "Gingerbread Latte",
+    "pret": 23.0,
+    "ingrediente": [
+      { "nume": "Cafea Boabe", "cantitate": 18.0 },
+      { "nume": "Lapte Integral", "cantitate": 200.0 },
+      { "nume": "Sirop Gingerbread", "cantitate": 25.0 }
+    ]
+  }
+  
+]

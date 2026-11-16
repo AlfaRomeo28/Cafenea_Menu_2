@@ -1,75 +1,63 @@
 #include "Promotie.hpp"
-#include <stdexcept>
+#include <utility>
+#include "Exceptii.hpp"
 
-namespace
-{
-    const double REDUCERE_MAXIMA = 90.0;
-}
+int Promotie::numarInstante = 0;
 
-// Aceleasi reguli sunt verificate de ambii constructori
-void Promotie::valideaza() const
+Promotie::Promotie(std::string numePromo, std::string produs, bool esteActiva)
+    : nume(std::move(numePromo)), produsVizat(std::move(produs)), activa(esteActiva)
 {
     if (nume.empty())
-        throw std::invalid_argument("Numele promotiei nu poate fi gol.");
+        throw EroareDateInvalide("Numele promotiei nu poate fi gol.");
     if (produsVizat.empty())
-        throw std::invalid_argument("Promotia trebuie sa vizeze un produs.");
-    if (procent <= 0.0 || procent > REDUCERE_MAXIMA)
-        throw std::invalid_argument("Reducerea promotiei trebuie sa fie intre 0 (exclusiv) si 90%.");
+        throw EroareDateInvalide("Promotia trebuie sa vizeze un produs.");
+    ++numarInstante;
 }
 
-// Promotiile noi pornesc dezactivate, ca sa nu schimbe preturile din greseala
-Promotie::Promotie(const std::string& numePromotie, const std::string& produs, double procentReducere)
-    : nume(numePromotie), produsVizat(produs), procent(procentReducere), activa(false)
+Promotie::Promotie(const Promotie& alta)
+    : nume(alta.nume), produsVizat(alta.produsVizat), activa(alta.activa)
 {
-    valideaza();
+    ++numarInstante;
 }
 
-Promotie::Promotie(const std::string& numePromotie, const std::string& produs, double procentReducere,
-                   bool esteActiva)
-    : nume(numePromotie), produsVizat(produs), procent(procentReducere), activa(esteActiva)
+Promotie::~Promotie()
 {
-    valideaza();
+    --numarInstante;
 }
 
 const std::string& Promotie::getNume() const { return nume; }
 const std::string& Promotie::getProdusVizat() const { return produsVizat; }
-double Promotie::getProcent() const { return procent; }
 bool Promotie::esteActiva() const { return activa; }
+int Promotie::getNumarInstante() { return numarInstante; }
 
-// Se aplica doar daca e activa si produsul coincide
 bool Promotie::aplicabila(const std::string& produs) const
 {
     return activa && produs == produsVizat;
 }
 
-double Promotie::calculeazaPretRedus(double pretInitial) const
+double Promotie::totalDupaPromotie(double pretUnitar, int cantitate) const
 {
-    if (pretInitial < 0.0)
-        throw std::invalid_argument("Pretul initial nu poate fi negativ.");
-    return pretInitial * (1.0 - procent / 100.0);
+    if (pretUnitar < 0.0)
+        throw EroareDateInvalide("Pretul unitar nu poate fi negativ.");
+    if (cantitate <= 0)
+        throw EroareDateInvalide("Cantitatea trebuie sa fie pozitiva.");
+    if (!activa)
+        return pretUnitar * cantitate;
+    return totalImpl(pretUnitar, cantitate);
 }
 
-// Cat economiseste clientul pe cantitatea data (0 daca promotia e oprita)
-double Promotie::economie(double pretInitial, int cantitate) const
+double Promotie::economie(double pretUnitar, int cantitate) const
 {
-    if (!activa || cantitate <= 0)
-        return 0.0;
-    return cantitate * (pretInitial - calculeazaPretRedus(pretInitial));
+    return pretUnitar * cantitate - totalDupaPromotie(pretUnitar, cantitate);
 }
 
-void Promotie::activeaza()
-{
-    activa = true;
-}
-
-void Promotie::dezactiveaza()
-{
-    activa = false;
-}
+void Promotie::activeaza() { activa = true; }
+void Promotie::dezactiveaza() { activa = false; }
 
 std::ostream& operator<<(std::ostream& os, const Promotie& p)
 {
-    os << p.nume << " | Produs: " << p.produsVizat << " | Reducere: " << p.procent << "%"
-       << " | Stare: " << (p.activa ? "ACTIVA" : "oprita");
+    os << p.nume << " | Produs: " << p.produsVizat << " | ";
+    p.afiseazaImpl(os);                               // partea specifica tipului
+    os << " | Stare: " << (p.activa ? "ACTIVA" : "oprita");
     return os;
 }
