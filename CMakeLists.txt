@@ -57,6 +57,8 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(nlohmann_json spdlog)
+set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF)
 
 if(APPLE)
     target_compile_definitions(spdlog PUBLIC FMT_CONSTEVAL= FMT_USE_CONSTEVAL=0)
