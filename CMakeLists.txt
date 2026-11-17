@@ -58,10 +58,10 @@ FetchContent_Declare(
         GIT_SHALLOW    1
         GIT_PROGRESS   ON
 )
-
-FetchContent_MakeAvailable(nlohmann_json spdlog)
 set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(nlohmann_json spdlog)
+
 
 if(APPLE)
     target_compile_definitions(spdlog PUBLIC FMT_CONSTEVAL= FMT_USE_CONSTEVAL=0)
