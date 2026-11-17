@@ -27,16 +27,9 @@ include(cmake/CopyHelper.cmake)
 include(CTest)
 include(cmake/RegisterTests.cmake)
 
-###############################################################################
-
-# External dependencies with FetchContent
 if(MSVC)
-    add_compile_definitions(_DISABLE_ASAN_ANNOTATIONS _DISABLE_STRING_ANNOTATION
-<<<<<<< HEAD
-                            _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION)
-=======
-            _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION)
->>>>>>> 029950e (Am adaugato clasa)
+        add_compile_definitions(_DISABLE_ASAN_ANNOTATIONS _DISABLE_STRING_ANNOTATION
+                _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION)
 endif()
 include(FetchContent)
 
@@ -62,7 +55,15 @@ FetchContent_Declare(
         GIT_SHALLOW    1
         GIT_PROGRESS   ON
 )
+
 set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(nlohmann_json spdlog)
+
+if(APPLE)
+        target_compile_definitions(spdlog PUBLIC FMT_CONSTEVAL= FMT_USE_CONSTEVAL=0)
+endif()
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(nlohmann_json spdlog)
 
@@ -98,6 +99,7 @@ add_library(${MAIN_LIBRARY_NAME} STATIC
         include/PromotieNPlusUnu.hpp
         include/PromotiePragCantitate.hpp
         include/IncarcatorDate.hpp
+        include/PromotieReducereFixa.hpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
@@ -121,6 +123,7 @@ target_sources(${MAIN_LIBRARY_NAME}
         src/PromotieNPlusUnu.cpp
         src/PromotiePragCantitate.cpp
         src/IncarcatorDate.cpp
+        src/PromotieReducereFixa.cpp
 )
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
