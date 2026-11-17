@@ -30,7 +30,10 @@ include(cmake/RegisterTests.cmake)
 ###############################################################################
 
 # External dependencies with FetchContent
-
+if(MSVC)
+    add_compile_definitions(_DISABLE_ASAN_ANNOTATIONS _DISABLE_STRING_ANNOTATION
+                            _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION)
+endif()
 include(FetchContent)
 
 set(FETCHCONTENT_QUIET OFF CACHE INTERNAL "Override verbose output" FORCE)
@@ -63,9 +66,7 @@ set(BUILD_SHARED_LIBS OFF)
 if(APPLE)
     target_compile_definitions(spdlog PUBLIC FMT_CONSTEVAL= FMT_USE_CONSTEVAL=0)
 endif()
-if(MSVC)
-    add_compile_definitions(_DISABLE_ASAN_ANNOTATIONS _DISABLE_STRING_ANNOTATION _DISABLE_VECTOR_ANNOTATION)
-endif()
+
 ###############################################################################
 
 # External dependencies with find_package
