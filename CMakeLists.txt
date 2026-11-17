@@ -32,7 +32,11 @@ include(cmake/RegisterTests.cmake)
 # External dependencies with FetchContent
 if(MSVC)
     add_compile_definitions(_DISABLE_ASAN_ANNOTATIONS _DISABLE_STRING_ANNOTATION
+<<<<<<< HEAD
                             _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION)
+=======
+            _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION)
+>>>>>>> 029950e (Am adaugato clasa)
 endif()
 include(FetchContent)
 
