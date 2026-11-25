@@ -333,11 +333,10 @@ void Cafenea::afiseazaPromotii() const
     for (const auto& p : promotii)
     {
         std::cout << " * " << *p << "\n";
-        // downcast cu sens: doar PromotieProcent are un procent de comparat
-        if (const PromotieProcent* pp = dynamic_cast<const PromotieProcent*>(p.get()))
+        if (p->esteProcentuala())
         {
             ++procentuale;
-            reducereMaxima = std::max(reducereMaxima, pp->getProcent());
+            reducereMaxima = std::max(reducereMaxima, p->getProcentReducere());
         }
     }
     if (procentuale > 0)

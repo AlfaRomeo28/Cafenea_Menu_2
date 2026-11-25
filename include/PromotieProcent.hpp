@@ -11,6 +11,9 @@ private:
 protected:
     double totalImpl(double pretUnitar, int cantitate) const override;
     void afiseazaImpl(std::ostream& os) const override;
+    bool esteProcentualaImpl() const override { return true; }
+    double procentReducereImpl() const override { return procent; }
+
 public:
     PromotieProcent(const std::string& numePromo, const std::string& produs, double procentReducere,
                     bool esteActiva = false);

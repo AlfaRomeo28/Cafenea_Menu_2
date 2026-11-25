@@ -22,6 +22,8 @@ protected:
     // totalul pentru `cantitate` bucati, cand promotia e activa (specifica fiecarui tip)
     virtual double totalImpl(double pretUnitar, int cantitate) const = 0;
     virtual void afiseazaImpl(std::ostream& os) const = 0;
+    virtual bool esteProcentualaImpl() const { return false; }
+    virtual double procentReducereImpl() const { return 0.0; }
 
 public:
     Promotie(std::string numePromo, std::string produs, bool esteActiva);
@@ -32,10 +34,13 @@ public:
     const std::string& getNume() const;
     const std::string& getProdusVizat() const;
 
+
     bool aplicabila(const std::string& produs) const;
 
     // total de plata pentru `cantitate` bucati (pret intreg daca promotia e oprita)
     double totalDupaPromotie(double pretUnitar, int cantitate) const;
+    bool esteProcentuala() const { return esteProcentualaImpl(); }       
+    double getProcentReducere() const { return procentReducereImpl(); }
 
 
     void activeaza();
