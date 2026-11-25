@@ -29,4 +29,4 @@ std::unique_ptr<Promotie> PromotieProcent::clone() const
     return std::make_unique<PromotieProcent>(*this);
 }
 
-double PromotieProcent::getProcent() const { return procent; }
+

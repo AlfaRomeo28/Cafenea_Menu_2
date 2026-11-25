@@ -18,7 +18,7 @@ public:
     PromotieProcent(const std::string& numePromo, const std::string& produs, double procentReducere,
                     bool esteActiva = false);
     std::unique_ptr<Promotie> clone() const override;
-    double getProcent() const;
+    
 };
 
 #endif
