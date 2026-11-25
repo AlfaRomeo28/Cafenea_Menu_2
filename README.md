@@ -28,3 +28,8 @@
 Gestiune clienți: Vizualizarea bazei de date cu clienți și a nivelurilor de fidelitate asociate.
 
 Istoric și persistență: Consultarea istoricului detaliat al comenzilor finalizate și exportarea raportului complet de vânzări într-un fișier extern.
+
+## Resurse
+
+- [spdlog v1.14.1](https://github.com/gabime/spdlog/releases/tag/v1.14.1) - logging
+- [nlohmann/json v3.11.3](https://github.com/nlohmann/json/releases/tag/v3.11.3) - citire JSON
