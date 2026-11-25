@@ -100,6 +100,10 @@ add_library(${MAIN_LIBRARY_NAME} STATIC
         include/PromotiePragCantitate.hpp
         include/IncarcatorDate.hpp
         include/PromotieReducereFixa.hpp
+        include/LinieComanda.hpp
+        include/Livrator.hpp
+        include/LivratorFix.hpp
+        include/LivratorProcent.hpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
@@ -124,6 +128,10 @@ target_sources(${MAIN_LIBRARY_NAME}
         src/PromotiePragCantitate.cpp
         src/IncarcatorDate.cpp
         src/PromotieReducereFixa.cpp
+        src/Livrare.cpp
+        src/Livrator.cpp
+        src/LivratorFix.cpp
+        src/LivratorProcent.cpp
 )
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )

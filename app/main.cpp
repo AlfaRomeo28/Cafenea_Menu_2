@@ -8,6 +8,9 @@
 #include "Cafenea.hpp"
 #include "Exceptii.hpp"
 #include "IncarcatorDate.hpp"
+#include "Livrator.hpp"
+#include "LivratorFix.hpp"
+#include "LivratorProcent.hpp"
 #include "PromotieNPlusUnu.hpp"
 #include "PromotiePragCantitate.hpp"
 #include "PromotieProcent.hpp"
@@ -169,6 +172,30 @@ namespace
         }
     }
 
+    // firma de livrare si cum isi calculeaza taxa: comision procentual sau taxa fixa
+    std::unique_ptr<Livrator> citesteLivrator()
+    {
+        std::string firma = citesteText("Numele firmei de livrare: ");
+        std::cout << "  Taxa: 1. Comision procentual  2. Taxa fixa pe livrare\n";
+        int tip = citesteNumar<int>("  Alege tipul: ");
+
+        if (tip == 1)
+            return std::make_unique<LivratorProcent>(firma, citesteNumar<double>("Comision (%): "));
+        if (tip == 2)
+            return std::make_unique<LivratorFix>(firma, citesteNumar<double>("Taxa (Lei leuti): "));
+        throw EroareDateInvalide("tip de taxa necunoscut.");
+    }
+
+    // barista scrie ce trebuie sa ia livratorul, firma si taxa; taxa se scade din balanta
+    void inregistreazaLivrareDinMeniu(Cafenea& cafenea)
+    {
+        std::string linieProduse = citesteText("Ce trebuie sa ia livratorul (produse separate prin ';'): ");
+        std::vector<std::string> produse = imparteProduse(linieProduse);
+        std::unique_ptr<Livrator> livrator = citesteLivrator();
+        cafenea.inregistreazaLivrare(produse, *livrator);
+        cafenea.afiseazaLivrari();
+    }
+
     void salveazaCuMesaj(bool reusit, const std::string& ce, const std::string& cale)
     {
         if (reusit)
@@ -196,6 +223,8 @@ namespace
                   << "12. Salveaza raportul financiar intr-un fisier\n"
                   << "13. Salveaza stocul curent intr-un fisier\n"
                   << "14. Simuleaza o comanda pe o copie a cafenelei (fara efect real)\n"
+                  << "15. Inregistreaza o livrare (produse, firma, taxa)\n"
+                  << "16. Afiseaza livrarile\n"
                   << " 0. Iesire\n"
                   << "Alege o optiune: ";
     }
@@ -281,6 +310,12 @@ namespace
             std::cout << "[INFO] Simulare incheiata; stocul si sold-ul real nu s-au modificat.\n";
             break;
         }
+        case 15:
+            inregistreazaLivrareDinMeniu(cafenea);
+            break;
+        case 16:
+            cafenea.afiseazaLivrari();
+            break;
         default:
             std::cout << "\nOptiune invalida! Incearca din nou.\n";
             break;

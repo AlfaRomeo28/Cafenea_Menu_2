@@ -10,6 +10,7 @@
 #include "CReteta.hpp"
 #include "IstoricVanzari.hpp"
 #include "Ingrediente.hpp"
+#include "Livrare.hpp"
 #include "Promotie.hpp"
 #include "RaportFinanciar.hpp"
 #include "Reteta.hpp"
@@ -24,7 +25,9 @@ private:
     IstoricVanzari istoric;
     int urmatorulIdComanda;
     std::vector<std::unique_ptr<Promotie> > promotii;   // pointeri la baza: apeluri virtuale
+    std::vector<Livrare> livrari;                       // livrarile inregistrate de barista
     double cheltuieliReaprovizionare;
+    double cheltuieliLivrare;                           // taxele platite firmelor de livrare
 
     int gasesteIndexIngredient(const std::string& denumire) const;
     int gasesteIndexReteta(const std::string& denumire) const;
@@ -54,6 +57,10 @@ public:
     void plaseazaComanda(Client& client, const std::vector<std::string>& produse);
     void reaprovizioneaza(const std::string& denumireIngredient, double cantitate);
 
+    // livrare: produsele pe care le ia livratorul; taxa firmei se scade din balanta
+    void inregistreazaLivrare(const std::vector<std::string>& produse, const Livrator& livrator);
+    void afiseazaLivrari() const;
+
     void afiseazaRaportProfitabilitate() const;
     void afiseazaIstoric() const;
     void afiseazaPromotii() const;
@@ -61,7 +68,6 @@ public:
     RaportFinanciar raportFinanciar() const;
     bool salveazaRaportVanzari(const std::string& cale) const;
     bool salveazaStocInFisier(const std::string& cale) const;
-    
 
     friend void swap(Cafenea& a, Cafenea& b) noexcept;
     friend std::ostream& operator<<(std::ostream& os, const Cafenea& c);

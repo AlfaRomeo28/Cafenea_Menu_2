@@ -3,12 +3,12 @@
 #include "Exceptii.hpp"
 
 RaportFinanciar::RaportFinanciar(double incasariTotale, double reduceriAcordate, double costMaterii,
-                                 double cheltuieliStoc, int comenzi)
+                                 double cheltuieliStoc, int comenzi, double cheltuieliLivr)
     : incasari(incasariTotale), reduceri(reduceriAcordate), costMateriePrima(costMaterii),
-      cheltuieliReaprovizionare(cheltuieliStoc), numarComenzi(comenzi)
+      cheltuieliReaprovizionare(cheltuieliStoc), numarComenzi(comenzi), cheltuieliLivrare(cheltuieliLivr)
 {
     if (incasari < 0.0 || reduceri < 0.0 || costMateriePrima < 0.0 ||
-        cheltuieliReaprovizionare < 0.0 || numarComenzi < 0)
+        cheltuieliReaprovizionare < 0.0 || numarComenzi < 0 || cheltuieliLivrare < 0.0)
         throw EroareDateInvalide("Valorile raportului financiar nu pot fi negative.");
 }
 
@@ -16,15 +16,16 @@ RaportFinanciar::RaportFinanciar(double incasariTotale, double reduceriAcordate,
 int RaportFinanciar::getNumarComenzi() const { return numarComenzi; }
 
 // profit brut = ce am incasat - cat a costat materia prima din bauturile vandute
+//               - taxele platite firmelor de livrare
 double RaportFinanciar::profitBrut() const
 {
-    return incasari - costMateriePrima;
+    return incasari - costMateriePrima - cheltuieliLivrare;
 }
 
-// flux de numerar = ce am incasat - ce am cheltuit pe cumparat stoc nou
+// flux de numerar = ce am incasat - ce am cheltuit pe cumparat stoc nou - taxele de livrare
 double RaportFinanciar::fluxNumerar() const
 {
-    return incasari - cheltuieliReaprovizionare;
+    return incasari - cheltuieliReaprovizionare - cheltuieliLivrare;
 }
 
 double RaportFinanciar::marjaBruta() const
@@ -73,6 +74,7 @@ bool RaportFinanciar::salveazaInFisier(const std::string& cale) const
            << "reduceri;" << reduceri << "\n"
            << "cost_materie_prima;" << costMateriePrima << "\n"
            << "cheltuieli_reaprovizionare;" << cheltuieliReaprovizionare << "\n"
+           << "taxe_livrare;" << cheltuieliLivrare << "\n"
            << "profit_brut;" << profitBrut() << "\n"
            << "flux_numerar;" << fluxNumerar() << "\n"
            << "marja_bruta_procent;" << marjaBruta() << "\n";
@@ -88,6 +90,7 @@ std::ostream& operator<<(std::ostream& os, const RaportFinanciar& r)
        << r.ponderePierderiDinReduceri() << "% din venitul potential)\n"
        << "Cost materie prima:        " << r.costMateriePrima << " Lei leuti\n"
        << "Cheltuieli reaprovizionare:" << " " << r.cheltuieliReaprovizionare << " Lei leuti\n"
+       << "Taxe livrare:              " << r.cheltuieliLivrare << " Lei leuti\n"
        << "Profit brut:               " << r.profitBrut() << " Lei leuti (marja "
        << r.marjaBruta() << "%)\n"
        << "Flux de numerar:           " << r.fluxNumerar() << " Lei leuti\n"

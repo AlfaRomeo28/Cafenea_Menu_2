@@ -6,11 +6,10 @@
 #include <utility>
 #include <spdlog/spdlog.h>
 #include "Exceptii.hpp"
-#include "PromotieProcent.hpp"
 
 Cafenea::Cafenea(const std::string& numeCafenea, double fondInitial)
     : nume(numeCafenea), balansf(fondInitial), istoric(numeCafenea), urmatorulIdComanda(1),
-      cheltuieliReaprovizionare(0.0)
+      cheltuieliReaprovizionare(0.0), cheltuieliLivrare(0.0)
 {
     if (nume.empty())
         throw EroareDateInvalide("Cafeneaua trebuie sa aiba un nume.");
@@ -21,11 +20,12 @@ Cafenea::Cafenea(const std::string& numeCafenea, double fondInitial)
 Cafenea::Cafenea(const Cafenea& alta)
     : nume(alta.nume), balansf(alta.balansf), stocIngrediente(alta.stocIngrediente),
       catalogR(alta.catalogR), istoric(alta.istoric), urmatorulIdComanda(alta.urmatorulIdComanda),
-      cheltuieliReaprovizionare(alta.cheltuieliReaprovizionare)
+      cheltuieliReaprovizionare(alta.cheltuieliReaprovizionare), cheltuieliLivrare(alta.cheltuieliLivrare)
 {
     promotii.reserve(alta.promotii.size());
     for (const auto& p : alta.promotii)
         promotii.push_back(p->clone());
+    livrari = alta.livrari;
 }
 
 void swap(Cafenea& a, Cafenea& b) noexcept
@@ -38,7 +38,9 @@ void swap(Cafenea& a, Cafenea& b) noexcept
     swap(a.istoric, b.istoric);
     swap(a.urmatorulIdComanda, b.urmatorulIdComanda);
     swap(a.promotii, b.promotii);
+    swap(a.livrari, b.livrari);
     swap(a.cheltuieliReaprovizionare, b.cheltuieliReaprovizionare);
+    swap(a.cheltuieliLivrare, b.cheltuieliLivrare);
 }
 
 Cafenea& Cafenea::operator=(Cafenea alta)
@@ -293,6 +295,9 @@ void Cafenea::afiseazaRaportProfitabilitate() const
                   << " | Profit Net: " << profitNet << " Lei leuti"
                   << " (" << marja << "% marja)\n";
     }
+    if (!livrari.empty())
+        std::cout << "Taxe de livrare platite (" << livrari.size() << " livrari): " << cheltuieliLivrare
+                  << " Lei leuti\n";
     std::cout << "-----------------------------------\n";
 }
 
@@ -363,7 +368,7 @@ RaportFinanciar Cafenea::raportFinanciar() const
 {
     return RaportFinanciar(istoric.totalIncasari(), istoric.totalReduceri(),
                            costMateriePrimaVanduta(), cheltuieliReaprovizionare,
-                           istoric.getNumarComenzi());
+                           istoric.getNumarComenzi(), cheltuieliLivrare);
 }
 
 void Cafenea::afiseazaRaportFinanciar() const
@@ -385,4 +390,40 @@ bool Cafenea::salveazaStocInFisier(const std::string& cale) const
                << ing.getunitateMasura() << ";" << ing.getpretUnitate() << "\n";
     }
     return fisier.good();
+}
+
+// livrare: produsele se vand ca o comanda normala (apare in istoric, scade stocul, intra in incasari),
+// iar taxa firmei de livrare se scade din balanta si intra in raportul financiar
+void Cafenea::inregistreazaLivrare(const std::vector<std::string>& produse, const Livrator& livrator)
+{
+    double valoare = 0.0;
+    for (const std::string& produs : produse)
+    {
+        int ir = gasesteIndexReteta(produs);
+        if (ir == -1)
+            throw EroareDateInvalide("Produs necunoscut: '" + produs + "'.");
+        valoare += catalogR[static_cast<std::size_t>(ir)].getPretVanzare();
+    }
+
+    Livrare livrare(produse, livrator, valoare);
+    if (livrare.getTaxa() > balansf)
+        throw EroareFonduriInsuficiente(livrare.getTaxa(), balansf);
+
+    Client clientLivrare("Livrare " + livrare.getFirma());
+    plaseazaComanda(clientLivrare, produse);
+
+    balansf -= livrare.getTaxa();
+    cheltuieliLivrare += livrare.getTaxa();
+    spdlog::info("[LIVRARE] {} | De plata: {:.2f} Lei leuti", livrare.getFirma(), livrare.getTaxa());
+    livrari.push_back(livrare);
+}
+
+void Cafenea::afiseazaLivrari() const
+{
+    std::cout << "\n---------- LIVRARI ----------\n";
+    if (livrari.empty())
+        std::cout << "Nu exista livrari.\n";
+    for (const Livrare& l : livrari)
+        std::cout << " * " << l << "\n";
+    std::cout << "-----------------------------\n";
 }

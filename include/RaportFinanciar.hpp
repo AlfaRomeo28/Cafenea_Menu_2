@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-// Rezumat financiar al cafenelei, calculat din vanzari, costuri si cheltuieli de stoc
+// Rezumat financiar al cafenelei, calculat din vanzari, costuri si cheltuieli de stoc si livrari
 class RaportFinanciar
 {
 private:
@@ -13,9 +13,10 @@ private:
     double costMateriePrima;
     double cheltuieliReaprovizionare;
     int numarComenzi;
+    double cheltuieliLivrare;
 public:
     RaportFinanciar(double incasariTotale, double reduceriAcordate, double costMaterii,
-                    double cheltuieliStoc, int comenzi);
+                    double cheltuieliStoc, int comenzi, double cheltuieliLivr);
 
 
     int getNumarComenzi() const;
