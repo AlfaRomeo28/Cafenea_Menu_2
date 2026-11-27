@@ -3,3 +3,5 @@ Cafea Boabe;300;g;0.15
 Lapte Integral;1000;ml;0.01
 Sirop Vanilie;200;ml;0.05
 Ciocolata Calda;500;g;0.04
+Sirop Gingerbread;500;ml;0.07
+Sirop Caramel;500;ml;0.08
